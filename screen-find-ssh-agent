@@ -1,0 +1,29 @@
+#!/bin/sh
+# update ssh agent socket and pid
+# Simon Walz, 2018
+
+# search for agents pid:
+SSH_AGENT_PID=`ps ux |
+	grep ssh-agent | grep -vE "grep|vim" |
+	perl -we 'while (<>) {
+		print $1
+		if (/^[A-Za-z0-9]{1,}[     ]{1,}([0-9]{1,})[       ]{1,}/);
+	}'`
+# search for agents socket:
+SSH_AUTH_SOCK=`find /tmp/ssh-* -maxdepth 2 -iname agent.\* \
+	-user "${USER}" 2>/dev/null`
+
+# export to environment and sub processes
+if test "x${SSH_AUTH_SOCK}" != "x"
+then
+	echo SSH_AUTH_SOCK=${SSH_AUTH_SOCK}
+	export SSH_AUTH_SOCK
+
+	if test "x${SSH_AGENT_PID}" != "x"
+	then
+		echo SSH_AGENT_PID=${SSH_AGENT_PID}
+		export SSH_AGENT_PID
+	fi
+else
+	echo "No Agent found." >&2
+fi
